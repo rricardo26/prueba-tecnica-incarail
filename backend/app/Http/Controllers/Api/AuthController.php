@@ -6,14 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\LoginRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
-use App\Services\CaslPermissionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
 final class AuthController extends Controller
 {
-    public function __construct(private readonly CaslPermissionService $caslService) {}
+    public function __construct() {}
 
     public function login(LoginRequest $request): JsonResponse
     {
@@ -46,8 +45,7 @@ final class AuthController extends Controller
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => new UserResource($user),
-            'abilities' => $this->caslService->formatForUser($user),
+            'user' => new UserResource($user)
         ]);
     }
 
