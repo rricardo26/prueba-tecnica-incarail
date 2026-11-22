@@ -29,14 +29,14 @@ Para esta solución se evaluaron distintas alternativas arquitectónicas (**DDD*
 
 El plan gratuito de `football-data.org` restringe el consumo a **10 peticiones por minuto**. Para evitar que la aplicación falle o deje de responder al superar esa cuota, se implementaron **4 niveles de defensa**:
 
-1. **Persistencia Local Idempotente (`updateOrCreate`):** Al importar una competición (`GET /api/competitions/{competition_id}`), la liga, sus equipos y sus jugadores (nombre, posición y número de camiseta) se almacenan en PostgreSQL usando `external_id` como clave única. Consultar la misma liga múltiples veces actualiza los registros sin duplicarlos.
+1. **Persistencia Local Idempotente (`updateOrCreate`):** Al importar una competición (`GET /api/competitions/{competition_id}`), la liga, sus equipos y sus jugadores se almacenan en PostgreSQL usando `external_id` como clave única. Consultar la misma liga múltiples veces actualiza los registros sin duplicarlos.
 2. **Estrategia Cache-Aside con TTL:**
-   * El listado general de ligas (`GET /api/competitions`) se almacena en caché Redis por **6 horas** (`football.competitions.list`).
-   * El detalle de una liga (`GET /api/competitions/{competition_id}`) tiene una ventana de frescura (`last_synced_at`) de **30 minutos** (configurable vía `FOOTBALL_DATA_CACHE_TTL_MINUTES`). Dentro de ese periodo, las consultas se sirven directamente desde PostgreSQL consumiendo **0 peticiones** hacia la API externa.
-3. **Rate Limiter Preventivo Atómico:** `FootballDataClient` utiliza `RateLimiter::attempt('football-data-outbound', 10, ..., 60)` respaldado por Redis antes de emitir cualquier solicitud HTTP saliente. Si se alcanza el tope de 10 llamadas en 60 segundos, bloquea la petición localmente y lanza `ExternalRateLimitExceededException` (`429`) sin saturar el proveedor externo.
+   * El listado general de ligas se almacena en caché Redis por **6 horas** (`football.competitions.list`).
+   * El detalle de una liga tiene una ventana de frescura de **30 minutos** (configurable vía `FOOTBALL_DATA_CACHE_TTL_MINUTES`). Dentro de ese periodo, las consultas se sirven directamente desde PostgreSQL consumiendo **0 peticiones** hacia la API externa.
+3. **Rate Limiter Preventivo Atómico:** `FootballDataClient` utiliza `RateLimiter::attempt('football-data-outbound', 10, ..., 60)` respaldado por Redis antes de emitir cualquier solicitud HTTP saliente. Si se alcanza el tope de 10 llamadas en 60 segundos, bloquea la petición localmente y lanza una excepción sin saturar el proveedor externo.
 4. **Independencia y Degradación Elegante (*Fallback*):**
    * Los endpoints `/api/team`, `/api/team/{team_id}` y `/api/players` operan exclusivamente contra la base de datos local y funcionan incluso si `football-data.org` está caído.
-   * Si se solicita refrescar una liga ya importada cuando no hay cupo (`429`) o el servicio externo no responde (`503`), el sistema captura la excepción y devuelve la copia local almacenada con `meta.stale = true`.
+   * Si se solicita refrescar una liga ya importada cuando no hay cupo (`429`) o el servicio externo no responde (`503`), el sistema captura la excepción y devuelve la copia local almacenada.
 
 ---
 
