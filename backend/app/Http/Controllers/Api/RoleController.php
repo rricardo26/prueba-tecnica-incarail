@@ -34,7 +34,7 @@ final class RoleController extends Controller
             'guard_name' => 'api',
         ]);
 
-        $role->syncPermissions($data['permissions']);
+        $role->syncPermissions($data['permissions'] ?? []);
 
         return response()->json([
             'data' => [
@@ -53,7 +53,9 @@ final class RoleController extends Controller
             $role->update(['name' => $data['name']]);
         }
 
-        $role->syncPermissions($data['permissions']);
+        if (array_key_exists('permissions', $data)) {
+            $role->syncPermissions($data['permissions']);
+        }
 
         return response()->json([
             'data' => [
