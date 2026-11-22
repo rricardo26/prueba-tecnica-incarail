@@ -1,16 +1,12 @@
 # Inca Rail · Football Data Hub
 
 ## Tabla de Contenidos
-1. [Stack Tecnológico](#1-stack-tecnológico)
-2. [Arquitectura y Decisiones Técnicas](#2-arquitectura-y-decisiones-técnicas)
-3. [Manejo del Límite de 10 Peticiones por Minuto](#3-manejo-del-límite-de-10-peticiones-por-minuto)
-4. [Diagramas de Arquitectura y Flujo](#4-diagramas-de-arquitectura-y-flujo)
-5. [Ejecución Paso a Paso con Docker (Recomendado)](#5-ejecución-paso-a-paso-con-docker-recomendado)
-6. [Ejecución Local sin Docker](#6-ejecución-local-sin-docker)
-7. [Usuarios de Prueba y Matriz de Permisos](#7-usuarios-de-prueba-y-matriz-de-permisos)
-8. [Endpoints de la API](#8-endpoints-de-la-api)
-9. [Pruebas Automatizadas e Integración Continua](#9-pruebas-automatizadas-e-integración-continua)
-10. [Supuestos y Alcance](#10-supuestos-y-alcance)
+
+1. [Arquitectura y Decisiones Técnicas](#arquitectura-y-decisiones-técnicas)
+2. [Manejo del Límite de 10 Peticiones por Minuto](#manejo-del-límite-de-10-peticiones-por-minuto)
+3. [Diagrama de Arquitectura](#diagrama-de-arquitectura)
+4. [Ejecución Paso a Paso con Docker](#ejecución-paso-a-paso-con-docker)
+5. [Usuarios de Prueba y Matriz de Permisos](#usuarios-de-prueba-y-matriz-de-permisos)
 
 
 ---
@@ -46,8 +42,8 @@ El plan gratuito de `football-data.org` restringe el consumo a **10 peticiones p
 
 ## Diagrama de Arquitectura
 
-### Arquitectura General (`docs/arquitectura.png`)
-![Diagrama de Arquitectura](docs/arquitectura.png)
+### Arquitectura General (`arquitectura.png`)
+![Diagrama de Arquitectura](arquitectura.png)
 
 Muestra la interacción entre la SPA en Vue 3, el proxy inverso Nginx, la API en Laravel 13 con Passport, el cliente externo aislado con `RateLimiter`, PostgreSQL, Redis y el worker de colas.
 
