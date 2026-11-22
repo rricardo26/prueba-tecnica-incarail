@@ -1,23 +1,77 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import { createRouter, createWebHistory } from 'vue-router';
+import { useAuthStore } from '@/stores/auth';
+import { useNotificationStore } from '@/stores/notification';
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(),
   routes: [
     {
-      path: '/',
-      name: 'home',
-      component: HomeView,
+      path: '/login',
+      name: 'login',
+      component: () => import('@/views/LoginView.vue'),
+      meta: { public: true },
     },
     {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue'),
+      path: '/',
+      component: () => import('@/components/common/AppLayout.vue'),
+      children: [
+        { path: '', redirect: '/competitions' },
+        {
+          path: 'competitions',
+          name: 'competitions',
+          component: () => import('@/views/CompetitionsView.vue'),
+          meta: { permission: 'competitions.read' },
+        },
+        {
+          path: 'teams',
+          name: 'teams',
+          component: () => import('@/views/TeamsView.vue'),
+          meta: { permission: 'teams.read' },
+        },
+        {
+          path: 'teams/:id',
+          name: 'team-detail',
+          component: () => import('@/views/TeamDetailView.vue'),
+          meta: { permission: 'teams.read' },
+        },
+        {
+          path: 'players',
+          name: 'players',
+          component: () => import('@/views/PlayersView.vue'),
+          meta: { permission: 'players.read' },
+        },
+        {
+          path: 'admin/users',
+          name: 'admin-users',
+          component: () => import('@/views/UsersAdminView.vue'),
+          meta: { permission: 'users.manage' },
+        },
+      ],
+    },
+    {
+      path: '/:pathMatch(.*)*',
+      redirect: '/competitions',
     },
   ],
-})
+});
 
-export default router
+router.beforeEach((to) => {
+  const auth = useAuthStore();
+  const notify = useNotificationStore();
+
+  if (!to.meta.public && !auth.isAuthenticated) {
+    return { name: 'login' };
+  }
+
+  if (to.name === 'login' && auth.isAuthenticated) {
+    return { name: 'competitions' };
+  }
+
+  const requiredPermission = to.meta.permission as string | undefined;
+  if (requiredPermission && !auth.can(requiredPermission)) {
+    notify.show('No tienes permisos para acceder a esta pantalla.', 'error');
+    return { name: 'competitions' };
+  }
+});
+
+export default router;
