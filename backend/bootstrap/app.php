@@ -40,24 +40,17 @@ return Application::configure(basePath: dirname(__DIR__))
             ], $status);
         };
 
-        $exceptions->render(fn (AuthenticationException $e, Request $r) =>
-            $renderJson('UNAUTHENTICATED', 'No autenticado o token inválido.', 401));
+        $exceptions->render(fn (AuthenticationException $e, Request $r) => $renderJson('UNAUTHENTICATED', 'No autenticado o token inválido.', 401));
 
-        $exceptions->render(fn (AuthorizationException|AccessDeniedHttpException $e, Request $r) =>
-            $renderJson('FORBIDDEN', 'No tienes permisos para realizar esta acción.', 403));
+        $exceptions->render(fn (AuthorizationException|AccessDeniedHttpException $e, Request $r) => $renderJson('FORBIDDEN', 'No tienes permisos para realizar esta acción.', 403));
 
-        $exceptions->render(fn (ExternalResourceRestrictedException $e, Request $r) =>
-            $renderJson('EXTERNAL_RESOURCE_RESTRICTED', $e->getMessage(), 403));
+        $exceptions->render(fn (ExternalResourceRestrictedException $e, Request $r) => $renderJson('EXTERNAL_RESOURCE_RESTRICTED', $e->getMessage(), 403));
 
-        $exceptions->render(fn (ModelNotFoundException|NotFoundHttpException $e, Request $r) =>
-            $renderJson('RESOURCE_NOT_FOUND', 'El recurso solicitado no existe.', 404));
+        $exceptions->render(fn (ModelNotFoundException|NotFoundHttpException $e, Request $r) => $renderJson('RESOURCE_NOT_FOUND', 'El recurso solicitado no existe.', 404));
 
-        $exceptions->render(fn (ValidationException $e, Request $r) =>
-            $renderJson('VALIDATION_ERROR', 'Los datos enviados no son válidos.', 422, $e->errors()));
+        $exceptions->render(fn (ValidationException $e, Request $r) => $renderJson('VALIDATION_ERROR', 'Los datos enviados no son válidos.', 422, $e->errors()));
 
-        $exceptions->render(fn (ExternalRateLimitExceededException|TooManyRequestsHttpException $e, Request $r) =>
-            $renderJson('RATE_LIMIT_EXCEEDED', $e->getMessage() ?: 'Límite de peticiones excedido.', 429));
+        $exceptions->render(fn (ExternalRateLimitExceededException|TooManyRequestsHttpException $e, Request $r) => $renderJson('RATE_LIMIT_EXCEEDED', $e->getMessage() ?: 'Límite de peticiones excedido.', 429));
 
-        $exceptions->render(fn (ExternalServiceUnavailableException $e, Request $r) =>
-            $renderJson('EXTERNAL_SERVICE_UNAVAILABLE', $e->getMessage(), $e->getCode() ?: 503));
+        $exceptions->render(fn (ExternalServiceUnavailableException $e, Request $r) => $renderJson('EXTERNAL_SERVICE_UNAVAILABLE', $e->getMessage(), $e->getCode() ?: 503));
     })->create();

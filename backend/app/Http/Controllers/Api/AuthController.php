@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\LoginRequest;
+use App\Http\Requests\LoginRequest;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -12,8 +12,6 @@ use Illuminate\Support\Facades\Hash;
 
 final class AuthController extends Controller
 {
-    public function __construct() {}
-
     public function login(LoginRequest $request): JsonResponse
     {
         $user = User::where('email', $request->validated('email'))->first();
@@ -45,7 +43,7 @@ final class AuthController extends Controller
         return response()->json([
             'access_token' => $token,
             'token_type' => 'Bearer',
-            'user' => new UserResource($user)
+            'user' => new UserResource($user),
         ]);
     }
 
@@ -55,7 +53,6 @@ final class AuthController extends Controller
 
         return response()->json([
             'user' => new UserResource($user),
-            'abilities' => $this->caslService->formatForUser($user),
         ]);
     }
 
