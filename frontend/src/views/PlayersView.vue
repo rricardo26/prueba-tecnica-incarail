@@ -52,7 +52,7 @@ onMounted(fetchPlayers);
 
         <v-progress-linear v-if="loading" indeterminate color="primary" class="mb-4" />
 
-        <EmptyStateCard v-else-if="players.length === 0" title="Sin jugadores encontrados"
+        <EmptyStateCard v-else-if="players.length === 0" title="Jugadores no encontrados"
             description="No hay jugadores registrados con esos filtros o aún no has importado una competición." />
 
         <v-card v-else>

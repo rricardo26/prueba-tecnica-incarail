@@ -15,6 +15,9 @@ const search = ref('');
 const loading = ref(false);
 const syncingId = ref<number | null>(null);
 
+const SYNC_POLL_INTERVAL_MS = 2000;
+const SYNC_TIMEOUT_MS = 45000;
+
 const filteredCompetitions = computed(() =>
     competitions.value.filter(
         (c) =>
@@ -33,23 +36,37 @@ async function loadCompetitions() {
     }
 }
 
+function delay(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function waitForCompetitionSync(competitionId: number, previousSyncedAt: string | null) {
+    const deadline = Date.now() + SYNC_TIMEOUT_MS;
+
+    while (Date.now() < deadline) {
+        await delay(SYNC_POLL_INTERVAL_MS);
+
+        const { data } = await api.get<{ data: Competition[] }>('/competitions');
+        competitions.value = data.data;
+
+        const updated = competitions.value.find((c) => c.id === competitionId);
+        if (updated?.last_synced_at && updated.last_synced_at !== previousSyncedAt) {
+            notify.show(`Liga sincronizada (${updated.teams_count ?? 0} equipos).`, 'success');
+            return;
+        }
+    }
+
+    notify.show('Actualiza la lista en unos segundos.', 'warning');
+}
+
 async function importCompetition(competition: Competition) {
     syncingId.value = competition.id;
+    const previousSyncedAt = competition.last_synced_at;
+
     try {
-        const { data } = await api.get(`/competitions/${competition.external_id}`);
-        const source = data.meta?.source;
-        const teamsCount = data.data?.teams?.length ?? 0;
-
-        if (data.meta?.stale) {
-            notify.show('API externa sin cupo. Se muestran los datos locales guardados.', 'warning');
-        } else {
-            notify.show(
-                `Liga sincronizada (${teamsCount} equipos) desde ${source === 'local_cache' ? 'caché local' : 'football-data.org'}.`,
-                'success'
-            );
-        }
-
-        await loadCompetitions();
+        await api.post(`/competitions/${competition.external_id}/sync-async`);
+        notify.show('Sincronización iniciada.', 'info');
+        await waitForCompetitionSync(competition.id, previousSyncedAt);
     } finally {
         syncingId.value = null;
     }

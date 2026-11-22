@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import axios from 'axios';
 import { onMounted, reactive, ref } from 'vue';
 import { api } from '@/services/api';
 import { useNotificationStore } from '@/stores/notification';
@@ -30,6 +31,37 @@ const roleForm = reactive({
     permissions: [] as string[],
 });
 
+const userErrors = reactive<Record<string, string[]>>({});
+type UserFormField = keyof typeof userForm;
+
+function clearUserErrors() {
+    for (const field of Object.keys(userErrors)) {
+        delete userErrors[field];
+    }
+}
+
+function clearUserError(field: UserFormField) {
+    delete userErrors[field];
+}
+
+function applyUserValidationErrors(error: unknown): boolean {
+    if (!axios.isAxiosError(error) || error.response?.status !== 422) {
+        return false;
+    }
+
+    const details: unknown = error.response.data?.error?.details;
+    if (details && typeof details === 'object') {
+        for (const [field, messages] of Object.entries(details)) {
+            if (Array.isArray(messages)) {
+                userErrors[field] = messages.map(String);
+            }
+        }
+    }
+
+    notify.show('Revisa los campos marcados e inténtalo nuevamente.', 'warning');
+    return true;
+}
+
 async function loadData() {
     const [usersRes, rolesRes, permsRes] = await Promise.all([
         api.get<{ data: User[] }>('/users'),
@@ -44,6 +76,7 @@ async function loadData() {
 function openCreateUser() {
     editingUser.value = null;
     Object.assign(userForm, { name: '', email: '', password: '', role: 'viewer', is_active: true });
+    clearUserErrors();
     userDialog.value = true;
 }
 
@@ -56,10 +89,12 @@ function openEditUser(user: User) {
         role: user.roles[0] || 'viewer',
         is_active: user.is_active,
     });
+    clearUserErrors();
     userDialog.value = true;
 }
 
 async function saveUser() {
+    clearUserErrors();
     saving.value = true;
     try {
         if (editingUser.value) {
@@ -71,6 +106,8 @@ async function saveUser() {
         }
         userDialog.value = false;
         await loadData();
+    } catch (error) {
+        applyUserValidationErrors(error);
     } finally {
         saving.value = false;
     }
@@ -176,14 +213,18 @@ onMounted(loadData);
             <v-card>
                 <v-card-title>{{ editingUser ? 'Editar Usuario' : 'Crear Usuario' }}</v-card-title>
                 <v-card-text>
-                    <v-text-field v-model="userForm.name" label="Nombre" variant="outlined" class="mb-2" />
+                    <v-text-field v-model="userForm.name" label="Nombre" variant="outlined" class="mb-2"
+                        :error-messages="userErrors.name" @update:model-value="clearUserError('name')" />
                     <v-text-field v-model="userForm.email" label="Correo" type="email" variant="outlined"
-                        class="mb-2" />
+                        class="mb-2" :error-messages="userErrors.email"
+                        @update:model-value="clearUserError('email')" />
                     <v-text-field v-model="userForm.password"
                         :label="editingUser ? 'Nueva contraseña (opcional)' : 'Contraseña'" type="password"
-                        variant="outlined" class="mb-2" />
+                        variant="outlined" class="mb-2" :error-messages="userErrors.password"
+                        @update:model-value="clearUserError('password')" />
                     <v-select v-model="userForm.role" :items="roles.map((r) => r.name)" label="Rol"
-                        variant="outlined" />
+                        variant="outlined" :error-messages="userErrors.role"
+                        @update:model-value="clearUserError('role')" />
                 </v-card-text>
                 <v-card-actions class="pa-4">
                     <v-spacer />

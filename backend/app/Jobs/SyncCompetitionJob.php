@@ -2,11 +2,11 @@
 
 namespace App\Jobs;
 
+use App\Services\CompetitionSyncService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Middleware\RateLimited;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\RateLimited;
-use App\Services\CompetitionSyncService;
 
 class SyncCompetitionJob implements ShouldQueue
 {

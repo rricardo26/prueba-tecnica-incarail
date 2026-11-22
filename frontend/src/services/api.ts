@@ -37,7 +37,7 @@ api.interceptors.response.use(
             notify.show(serverMessage || 'No tienes permisos para realizar esta acción.', 'error');
         } else if (status === 429) {
             notify.show(
-                'Se alcanzó el límite de 10 peticiones por minuto de football-data.org. Intenta en unos segundos.',
+                'Intenta en unos segundos.',
                 'warning'
             );
         } else if (status >= 500) {
