@@ -17,10 +17,10 @@ final class TeamController extends Controller
             ->when($request->filled('search'), function ($query) use ($request) {
                 $term = '%'.$request->string('search').'%';
                 $query->where('name', 'ilike', $term)
-                      ->orWhere('tla', 'ilike', $term);
+                    ->orWhere('tla', 'ilike', $term);
             })
             ->orderBy('name')
-            ->get();
+            ->paginate($request->integer('per_page', 20));
 
         return TeamResource::collection($teams);
     }

@@ -7,21 +7,34 @@ import type { Team } from '@/types';
 
 const teams = ref<Team[]>([]);
 const search = ref('');
+const page = ref(1);
+const totalPages = ref(1);
 const loading = ref(false);
 
 async function fetchTeams() {
     loading.value = true;
     try {
-        const { data } = await api.get<{ data: Team[] }>('/team', {
-            params: { search: search.value || undefined },
+        const { data } = await api.get<{ data: Team[]; meta?: { last_page?: number } }>('/team', {
+            params: {
+                page: page.value,
+                search: search.value || undefined,
+            },
         });
         teams.value = data.data;
+        totalPages.value = data.meta?.last_page ?? 1;
     } finally {
         loading.value = false;
     }
 }
 
-watch(search, fetchTeams);
+watch(search, () => {
+    if (page.value !== 1) {
+        page.value = 1;
+    } else {
+        fetchTeams();
+    }
+});
+watch(page, fetchTeams);
 onMounted(fetchTeams);
 </script>
 
@@ -60,5 +73,9 @@ onMounted(fetchTeams);
                 </v-card>
             </v-col>
         </v-row>
+
+        <div v-if="!loading && teams.length > 0 && totalPages > 1" class="d-flex justify-center pa-4">
+            <v-pagination v-model="page" :length="totalPages" total-visible="5" />
+        </div>
     </div>
 </template>
